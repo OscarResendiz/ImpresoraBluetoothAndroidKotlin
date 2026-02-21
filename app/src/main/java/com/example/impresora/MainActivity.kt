@@ -73,7 +73,8 @@ class MainActivity : AppCompatActivity() {
         loadPairedDevices()
 
         // Mostrar preview inicial del ticket
-        updatePreview(TicketGenerator.generateSampleTicket())
+        //updatePreview(TicketGenerator.generateSampleTicket())
+        showLabelPreview()
     }
 
     private fun requestBluetoothPermissions() {
@@ -126,6 +127,10 @@ class MainActivity : AppCompatActivity() {
         binding.testPrintButton.setOnClickListener {
             printTestMessage()
         }
+
+        binding.previewLabelButton.setOnClickListener {
+            showLabelPreview()
+        }
     }
 
     private fun connectToDevice() {
@@ -163,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val ticket = TicketGenerator.generateSampleTicket()
-        updatePreview(ticket)
+        updatePreview(ticket, null, null)
         showMessage("Enviando ticket a imprimir...", Toast.LENGTH_SHORT)
 
         bluetoothManager.printTicket(ticket) { success, message ->
@@ -191,7 +196,7 @@ class MainActivity : AppCompatActivity() {
             ================================
         """.trimIndent()
 
-        updatePreview(testMessage)
+        updatePreview(testMessage, null, null)
         showMessage("Enviando prueba de conexión...", Toast.LENGTH_SHORT)
 
         bluetoothManager.printTicket(testMessage) { success, message ->
@@ -200,23 +205,15 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun printTicketWithImage() {
+        // Solo imprimir si el usuario confirma
         if (!bluetoothManager.getConnectionStatus()) {
             showMessage("Primero debes conectar una impresora Bluetooth", Toast.LENGTH_SHORT)
             return
         }
-
-        showMessage("Generando ticket con imagen...", Toast.LENGTH_SHORT)
-
+        showMessage("Enviando ticket a imprimir...", Toast.LENGTH_SHORT)
         try {
-            // Generar ticket con imagen
             val ticketData = TicketGenerator.generateSampleTicketWithImage(this)
-            
-            // Actualizar preview con el texto
-            updatePreview(ticketData.textContent)
-            
-            // Si hay comando de imagen, enviarlo
             if (ticketData.imageCommand.isNotEmpty()) {
-                showMessage("Enviando ticket con imagen a imprimir...", Toast.LENGTH_SHORT)
                 bluetoothManager.printTicketWithImage(
                     ticketData.imageCommand,
                     ticketData.textContent,
@@ -225,8 +222,6 @@ class MainActivity : AppCompatActivity() {
                     showMessage(message, Toast.LENGTH_SHORT)
                 }
             } else {
-                // Si no hay imagen, imprimir solo texto
-                showMessage("Advertencia: No hay imagen. Imprimiendo solo texto...", Toast.LENGTH_LONG)
                 bluetoothManager.printTicket(ticketData.textContent) { success, message ->
                     showMessage(message, Toast.LENGTH_SHORT)
                 }
@@ -244,8 +239,24 @@ class MainActivity : AppCompatActivity() {
         )
     }
 
-    private fun updatePreview(text: String) {
-        binding.previewText.text = text
+    private fun updatePreview(text: String, image: android.graphics.Bitmap? = null, qr: android.graphics.Bitmap? = null) {
+        //binding.previewText.text = text
+
+        // Mostrar imagen si existe
+        if (image != null) {
+            binding.previewImage.setImageBitmap(image)
+            binding.previewImage.visibility = android.view.View.VISIBLE
+        } else {
+            binding.previewImage.visibility = android.view.View.GONE
+        }
+
+        // Mostrar QR si existe
+        if (qr != null) {
+            binding.previewQr.setImageBitmap(qr)
+            binding.previewQr.visibility = android.view.View.VISIBLE
+        } else {
+            binding.previewQr.visibility = android.view.View.GONE
+        }
     }
 
     private fun showMessage(message: String, duration: Int = Toast.LENGTH_SHORT) {
@@ -270,5 +281,38 @@ class MainActivity : AppCompatActivity() {
     override fun onDestroy() {
         bluetoothManager.shutdown()
         super.onDestroy()
+    }
+
+    private fun showLabelPreview() {
+        // Generar ticket con imagen y datos completos
+        val items = listOf(
+            "Cafe Premium" to 5.50,
+            "Donut Chocolate" to 2.50,
+            "Agua Mineral" to 1.50,
+            "Pan Integral" to 3.00,
+            "Zumo Natural" to 4.00
+        )
+        val ticketData = TicketGenerator.generateCustomTicketWithImage(
+            this,
+            storeName = "TIENDA EJEMPLO",
+            storeAddress = "Bloque Centro",
+            items = items,
+            taxPercentage = 0.19
+        )
+        val gsRenderer = GSv0LabelRenderer()
+        // Calcular altura dinámica según cantidad de líneas (factor mayor)
+        val lineCount = ticketData.textContent.split("\n").size
+        val width = 600 // Aumenta el ancho del bitmap
+        val height = 60 + lineCount * 48
+        val labelBitmap = if (ticketData.imageCommand.isNotEmpty()) {
+            try {
+                gsRenderer.renderLabelWithText(ticketData.imageCommand, ticketData.textContent, width, height)
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+        val qrBitmap = QRCodeGenerator.generateQRCode(ticketData.ticketId, size = 640) // Aumenta el tamaño del QR
+        updatePreview("", labelBitmap, qrBitmap)
+        showMessage("Vista previa generada. Revisa antes de imprimir.", Toast.LENGTH_SHORT)
     }
 }

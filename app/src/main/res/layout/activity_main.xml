@@ -120,6 +120,13 @@
         android:text="Imprimir Prueba de Conexión"
         android:layout_marginBottom="12dp" />
 
+    <Button
+        android:id="@+id/previewLabelButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Vista previa de etiqueta"
+        android:layout_marginBottom="8dp" />
+
     <!-- Preview del ticket -->
     <TextView
         android:layout_width="match_parent"
@@ -135,17 +142,34 @@
         android:layout_weight="1"
         android:layout_marginBottom="12dp">
 
-        <TextView
-            android:id="@+id/previewText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Aquí se mostrará la vista previa del ticket"
-            android:textSize="10sp"
-            android:fontFamily="monospace"
-            android:padding="8dp"
-            android:background="@android:color/darker_gray"
-            android:textColor="@android:color/white" />
+            android:orientation="vertical">
 
+            <!-- Imagen del ticket -->
+            <ImageView
+                android:id="@+id/previewImage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="400dp"
+                android:maxHeight="1200dp"
+                android:layout_gravity="center"
+                android:adjustViewBounds="true"
+                android:scaleType="fitCenter"
+                android:visibility="gone"
+                android:contentDescription="Imagen del ticket" />
+
+            <!-- Código QR del ticket -->
+            <ImageView
+                android:id="@+id/previewQr"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center"
+                android:visibility="gone"
+                android:contentDescription="Código QR del ticket" />
+
+        </LinearLayout>
     </ScrollView>
 
     <!-- Mensajes -->

@@ -156,8 +156,7 @@ object TicketGenerator {
 
     Fecha: $currentDate
     Ticket: ${ticketId.take(8).uppercase()}
-    Caja: 1
-
+    Caja: 112345678912345678913456123
     --------------------------------
     ARTICULO           CANT PRECIO
     --------------------------------
