@@ -128,6 +128,10 @@ class MainActivity : AppCompatActivity() {
             printTestMessage()
         }
 
+        binding.openDrawerButton.setOnClickListener {
+            openCashDrawer()
+        }
+
         binding.previewLabelButton.setOnClickListener {
             showLabelPreview()
         }
@@ -204,6 +208,18 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun openCashDrawer() {
+        if (!bluetoothManager.getConnectionStatus()) {
+            showMessage("Primero debes conectar una impresora Bluetooth", Toast.LENGTH_SHORT)
+            return
+        }
+
+        showMessage("Enviando comando al cajón de dinero...", Toast.LENGTH_SHORT)
+        bluetoothManager.openCashDrawer { _, message ->
+            showMessage(message, Toast.LENGTH_SHORT)
+        }
+    }
+
     private fun printTicketWithImage() {
         // Solo imprimir si el usuario confirma
         if (!bluetoothManager.getConnectionStatus()) {
@@ -251,12 +267,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Mostrar QR si existe
+
         if (qr != null) {
             binding.previewQr.setImageBitmap(qr)
             binding.previewQr.visibility = android.view.View.VISIBLE
         } else {
             binding.previewQr.visibility = android.view.View.GONE
         }
+
+
     }
 
     private fun showMessage(message: String, duration: Int = Toast.LENGTH_SHORT) {

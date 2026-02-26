@@ -218,6 +218,18 @@ class BluetoothPrinterManager(private val context: Context) {
         }
     }
 
+    fun openCashDrawer(onResult: (success: Boolean, message: String) -> Unit) {
+        // ESC p m t1 t2 (Abrir cajón de dinero)
+        val drawerCommand = byteArrayOf(0x1B, 0x70, 0x00, 0x32, 0xFA.toByte())
+        sendBinaryData(drawerCommand) { success, msg ->
+            if (success) {
+                onResult(true, "Comando de cajón enviado exitosamente")
+            } else {
+                onResult(false, "Error al abrir cajón: $msg")
+            }
+        }
+    }
+
     fun getConnectionStatus(): Boolean = isConnected
 
     fun shutdown() {

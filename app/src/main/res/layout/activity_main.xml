@@ -118,6 +118,13 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Imprimir Prueba de Conexión"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/openDrawerButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Abrir Cajón de Dinero"
         android:layout_marginBottom="12dp" />
 
     <Button
