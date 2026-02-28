@@ -134,6 +134,13 @@
         android:text="Vista previa de etiqueta"
         android:layout_marginBottom="8dp" />
 
+    <Button
+        android:id="@+id/sendWhatsAppButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Enviar Ticket por WhatsApp"
+        android:layout_marginBottom="8dp" />
+
     <!-- Preview del ticket -->
     <TextView
         android:layout_width="match_parent"

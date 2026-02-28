@@ -135,6 +135,10 @@ class MainActivity : AppCompatActivity() {
         binding.previewLabelButton.setOnClickListener {
             showLabelPreview()
         }
+
+        binding.sendWhatsAppButton.setOnClickListener {
+            sendTicketViaWhatsApp()
+        }
     }
 
     private fun connectToDevice() {
@@ -245,6 +249,85 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
             showMessage("Error: ${e.message}", Toast.LENGTH_SHORT)
+        }
+    }
+
+    private fun sendTicketViaWhatsApp() {
+        val items = listOf(
+            "Cafe Premium" to 5.50,
+            "Donut Chocolate" to 2.50,
+            "Agua Mineral" to 1.50,
+            "Pan Integral" to 3.00,
+            "Zumo Natural" to 4.00
+        )
+        val ticketData = TicketGenerator.generateCustomTicketWithImage(
+            this,
+            storeName = "TIENDA EJEMPLO",
+            storeAddress = "Bloque Centro",
+            items = items,
+            taxPercentage = 0.19
+        )
+        val gsRenderer = GSv0LabelRenderer()
+        val lineCount = ticketData.textContent.split("\n").size
+        val width = 600
+        val height = 60 + lineCount * 48
+        
+        val labelBitmap = if (ticketData.imageCommand.isNotEmpty()) {
+            try {
+                gsRenderer.renderLabelWithText(ticketData.imageCommand, ticketData.textContent, width, height)
+            } catch (e: Exception) {
+                null
+            }
+        } else null
+        
+        val qrBitmap = QRCodeGenerator.generateQRCode(ticketData.ticketId, size = 640)
+
+        if (labelBitmap == null || qrBitmap == null) {
+            showMessage("No se pudo generar la imagen del ticket")
+            return
+        }
+
+        val combinedWidth = java.lang.Math.max(labelBitmap.width, qrBitmap.width)
+        val combinedHeight = labelBitmap.height + qrBitmap.height + 40
+        
+        val combinedBitmap = android.graphics.Bitmap.createBitmap(combinedWidth, combinedHeight, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(combinedBitmap)
+        canvas.drawColor(android.graphics.Color.WHITE)
+        
+        val labelLeft = (combinedWidth - labelBitmap.width) / 2f
+        canvas.drawBitmap(labelBitmap, labelLeft, 0f, null)
+        
+        val qrLeft = (combinedWidth - qrBitmap.width) / 2f
+        canvas.drawBitmap(qrBitmap, qrLeft, labelBitmap.height.toFloat() + 20f, null)
+
+        try {
+            val cachePath = java.io.File(externalCacheDir, "shared_images")
+            cachePath.mkdirs()
+            val file = java.io.File(cachePath, "ticket.png")
+            val stream = java.io.FileOutputStream(file)
+            combinedBitmap.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, stream)
+            stream.close()
+
+            val uri = androidx.core.content.FileProvider.getUriForFile(this, "${packageName}.fileprovider", file)
+            
+            val intent = android.content.Intent(android.content.Intent.ACTION_SEND)
+            intent.type = "image/png"
+            intent.setPackage("com.whatsapp")
+            intent.putExtra(android.content.Intent.EXTRA_STREAM, uri)
+            intent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            
+            try {
+                startActivity(intent)
+            } catch (e: Exception) {
+                val genericIntent = android.content.Intent(android.content.Intent.ACTION_SEND)
+                genericIntent.type = "image/png"
+                genericIntent.putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                genericIntent.addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                startActivity(android.content.Intent.createChooser(genericIntent, "Compartir ticket"))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            showMessage("Error al guardar la imagen para compartir")
         }
     }
 
